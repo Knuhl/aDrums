@@ -50,6 +50,7 @@
     <Compile Include="Jack.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SerialDevice.cs" />
+    <Compile Include="SimulatedSerialPort.cs" />
     <Compile Include="SysExMessage.cs" />
     <Compile Include="MidiTrigger.cs" />
     <Compile Include="winSerialPort.cs">

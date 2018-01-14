@@ -10,12 +10,19 @@ namespace aDrumsLib
     {
         public static ISerialPort getSerialPort()
         {
+
+            return new SimulatedSerialPort();
+
             return new winSerialPort();
         }
 
-        public static string[] GetPortNames()
+        public static string[] GetPortNames() => GetPortNamesEnumerable().ToArray();
+
+        private static IEnumerable<string> GetPortNamesEnumerable()
         {
-         return   System.IO.Ports.SerialPort.GetPortNames();
+            yield return new SimulatedSerialPort().PortName;
+            foreach (var winSerialPortName in System.IO.Ports.SerialPort.GetPortNames())
+                yield return winSerialPortName;
         }
     }
 }

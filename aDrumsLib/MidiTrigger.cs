@@ -22,12 +22,10 @@ namespace aDrumsLib
 
         internal IEnumerable<SysExMessage> getSysExMsg(CommandType ct = CommandType.Set)
         {
-            var Msg = new List<SysExMessage>();
-            Msg.Add(new SysExMessage(SysExMsg.MSG_pinType, ct, (byte)PinNumber, (byte)Type));
-            Msg.Add(new SysExMessage(SysExMsg.MSG_pinThreshold, ct, (byte)PinNumber, Threshold));
-            Msg.Add(new SysExMessage(SysExMsg.MSG_pinNoteOnThreshold, ct, (byte)PinNumber, Duration_Threshold));
-            Msg.Add(new SysExMessage(SysExMsg.MSG_pinPitch, ct, (byte)PinNumber, Pitch));
-            return Msg;
+            yield return new SysExMessage(SysExMsg.MSG_pinType, ct, (byte)PinNumber, (byte)Type);
+            yield return new SysExMessage(SysExMsg.MSG_pinThreshold, ct, (byte)PinNumber, Threshold);
+            yield return new SysExMessage(SysExMsg.MSG_pinNoteOnThreshold, ct, (byte)PinNumber, Duration_Threshold);
+            yield return new SysExMessage(SysExMsg.MSG_pinPitch, ct, (byte)PinNumber, Pitch);
         }
 
         internal void setValues(SerialDevice sd)

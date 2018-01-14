@@ -45,6 +45,7 @@ namespace aDrumsLib
 
         public SerialDevice(string COM_Port)
         {
+            sp = Factory.getSerialPort();
             sp.PortName = COM_Port;
             sp.BaudRate = BAUDRATE;
             sp.DtrEnable = true;

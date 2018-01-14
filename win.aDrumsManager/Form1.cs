@@ -20,7 +20,7 @@ namespace aDrum
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            textBox1.Text = String.Join("\n", DrumManager.getCOMPorts());
+            textBox1.Text = String.Join(Environment.NewLine, DrumManager.getCOMPorts());
 
         }
 
@@ -33,8 +33,6 @@ namespace aDrum
                 dm.SaveSettings();
                 dm.LoadSettings();
                 MessageBox.Show(dm.Triggers.ElementAt(2).Threshold.ToString());
-
-
             }
         }
 
