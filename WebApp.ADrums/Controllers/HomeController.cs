@@ -12,7 +12,7 @@ namespace WebApp.ADrums.Controllers
         public IActionResult Connect()
         {
             var m = new Models.vm_Connect();
-            if (!DrumManager.Current.Ports.Any())
+            if (!Factory.GetPortNames().Any())
                 m.Errors = "No COM Port available are you sure the device is connected";
             return View(m);
         }
@@ -27,7 +27,8 @@ namespace WebApp.ADrums.Controllers
         {
             //if (!DrumManager.Current.IsConnected)
             //    return RedirectToAction("connect");
-            return View(DrumManager.Current.Jacks);
+
+            return View(new DrumManager(string.Empty).Jacks);
         }
 
         public IActionResult Contact()

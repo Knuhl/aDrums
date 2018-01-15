@@ -4,10 +4,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Diagnostics;
-using System.Threading;
 
 namespace aDrumsLib
 {
@@ -19,47 +15,41 @@ namespace aDrumsLib
      */
     internal class SerialDevice
     {
-        ISerialPort sp = null;
+        private readonly ISerialPort _sp = null;
 
         private const int BAUDRATE = 115200;
 
         public Version aDrumVersion { get; private set; }
+
         public string PortName
         {
             get
             {
-                return sp.PortName;
+                return _sp.PortName;
             }
             set
             {
-                sp.PortName = value;
+                _sp.PortName = value;
             }
         }
-        public bool IsOpen
-        {
-            get
-            {
-                return sp.IsOpen;
-            }
-        }
+        public bool IsOpen => _sp.IsOpen;
 
-        public SerialDevice(string COM_Port)
+        public SerialDevice(ISerialPort serialPort)
         {
-            sp = Factory.getSerialPort();
-            sp.PortName = COM_Port;
-            sp.BaudRate = BAUDRATE;
-            sp.DtrEnable = true;
-            sp.Open();
+            _sp = serialPort;
+            _sp.BaudRate = BAUDRATE;
+            _sp.DtrEnable = true;
+            _sp.Open();
 
             var r = RunCommand(SysExMsg.MSG_GET_HANDSHAKE, CommandType.Get);
-            if (r.Values.Length != 2) throw new Exception($"Not a valid aDrum response in {COM_Port}");
+            if (r.Values.Length != 2) throw new Exception($"Not a valid aDrum response in {serialPort.PortName}");
             aDrumVersion = new Version(r.Values[0], r.Values[1]);
 
         }
 
         public void Send(params byte[] message)
         {
-            sp.Write(message, 0, message.Length);
+            _sp.Write(message, 0, message.Length);
         }
 
         private void SendSysExMsg(SysExMessage sysEx)
@@ -69,8 +59,8 @@ namespace aDrumsLib
 
         private byte[] ReadExistingBytes()
         {
-            var bytes = new byte[sp.BytesToRead];
-            if (sp.BytesToRead > 1) sp.Read(bytes, 0, sp.BytesToRead);
+            var bytes = new byte[_sp.BytesToRead];
+            if (_sp.BytesToRead > 1) _sp.Read(bytes, 0, _sp.BytesToRead);
             return bytes;
         }
 
@@ -79,74 +69,58 @@ namespace aDrumsLib
             return RunCommand(new SysExMessage(command, type, values));
         }
 
-        internal SysExMessage RunCommand(SysExMessage msg, int Timeout = 30)
+        internal SysExMessage RunCommand(SysExMessage msg, int timeout = 5)
         {
-            if (sp.BytesToRead != 0) //clear the buffer from any sent bytes previously
-                sp.ReadExisting();
+            if (_sp.BytesToRead != 0) //clear the buffer from any sent bytes previously
+                _sp.ReadExisting();
             Send(msg.ToArray());
-            var r = ReadSysEx(Timeout);
+            var r = ReadSysEx(timeout);
             if (r.Command != msg.Command)
                 throw new ArrayTypeMismatchException($"Command Mismatch. Command Sent: '{msg.Command}', Command Read: '{r.Command}'");
             return r;
         }
 
-        private SysExMessage ReadSysEx(int TimeoutSeconds)
+        private SysExMessage ReadSysEx(int timeoutSeconds)
         {
-            return new SysExMessage(ReceiveSysEx(TimeoutSeconds));
+            return new SysExMessage(ReceiveSysEx(timeoutSeconds));
         }
 
-        private byte[] ReceiveSysEx(int TimeoutSeconds)
+        private byte[] ReceiveSysEx(int timeoutSeconds)
         {
             var storedInputData = new List<byte>();
             bool parsingSysex = false;
             var startTime = DateTime.UtcNow.Ticks;
-            while (new TimeSpan(DateTime.UtcNow.Ticks - startTime).Seconds < TimeoutSeconds)
+            
+            _sp.ReadTimeout = timeoutSeconds * 1000;
+
+            while (new TimeSpan(DateTime.UtcNow.Ticks - startTime).Seconds < timeoutSeconds)
             {
                 lock (this)
                 {
-                    int inputData = sp.ReadByte();
+                    int inputData = _sp.ReadByte();
                     if (parsingSysex)
                         if (inputData == SysExMessage.END_SYSEX)
-                        {
-                            parsingSysex = false;
                             return storedInputData.ToArray();
-                        }
                         else
                             storedInputData.Add((byte)inputData);
                     else if (inputData == SysExMessage.START_SYSEX)
                         parsingSysex = true;
                 }
             }
+
             throw new TimeoutException();
         }
-
-        public static SerialDevice getAvailable()
-        {
-            foreach (var cPort in GetPortNames())
-            {
-                try { return new SerialDevice(cPort); }
-                catch (Exception e)
-                {
-                    GC.Collect();
-                    e.ToString();
-                }
-            }
-            throw new KeyNotFoundException("No valid aDrums device found");
-        }
-
-        public static string[] GetPortNames()
-        {
-            return Factory.GetPortNames();
-        }
+        
+        public static string[] GetPortNames() => Factory.GetPortNames();
 
         public void Close()
         {
-            sp.Close();
+            _sp.Close();
         }
 
         ~SerialDevice()
         {
-            if (sp.IsOpen) sp.Close();
+            if (_sp.IsOpen) _sp.Close();
         }
 
     } // End class

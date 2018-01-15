@@ -1,37 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace aDrumsLib
 {
     public class DrumManager : IDisposable
     {
-        private static volatile DrumManager instance;
-        private static object syncRoot = new Object();
-
-        public static DrumManager Current
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    lock (syncRoot)
-                    {
-                        if (instance == null)
-                            instance = new DrumManager();
-                    }
-                }
-
-                return instance;
-            }
-        }
+        public ISerialPort SerialPort { get; }
 
         private SerialDevice SerialD { get; set; }
-
-        public IEnumerable<string> Ports { get { return Factory.GetPortNames(); } }
-
+        
         public string Jacks { get; private set; }
 
         public Version FW_Version
@@ -54,29 +31,36 @@ namespace aDrumsLib
             }
         }
 
-        public DrumManager()
+        public DrumManager(string comPort) : this(Factory.GetSerialPort(comPort))
         {
-            SerialD = null;
         }
 
-        public void Connect(string ComPort)
+        public DrumManager(ISerialPort serialPort)
         {
-            GC.Collect(); // avoid open connections
-            if (IsConnected) throw new Exception($"Already connected to device {SerialD.PortName}");
-            SerialD = ComPort == null ? SerialDevice.getAvailable() : new SerialDevice(ComPort);
+            if (serialPort == null)
+                throw new ArgumentNullException(nameof(serialPort));
+            if (serialPort.IsOpen)
+            {
+                serialPort.Close();
+                if (serialPort.IsOpen)
+                    throw new ArgumentException($"Already connected to device {SerialD.PortName}");
+            }
+            SerialPort = serialPort;
+            Connect();
+        }
+        
+        private void Connect()
+        {
+            SerialD = new SerialDevice(SerialPort);
 
             PinCount = SerialD.RunCommand(SysExMsg.MSG_GET_PINCOUNT, CommandType.Get).Values[0];
 
             LoadSettings();
         }
 
-        public void Connect()
+        private void Disconnect()
         {
-            Connect(null);
-        }
-
-        public void Disconnect()
-        {
+            if (SerialD?.IsOpen == true) SerialD.Close();
             SerialD = null;
             Triggers = null;
         }
@@ -112,15 +96,9 @@ namespace aDrumsLib
             LoadSettings();
         }
 
-        public static IEnumerable<string> getCOMPorts()
-        {
-            return SerialDevice.GetPortNames();
-        }
-
         public void Dispose()
         {
-            if (SerialD != null && SerialD.IsOpen) SerialD.Close();
-            SerialD = null;
+            Disconnect();
         }
 
     }

@@ -17,8 +17,8 @@ namespace WebApp.ADrums.Models
         public Microsoft.AspNetCore.Mvc.Rendering.SelectList getCOM_List()
         {
             return string.IsNullOrWhiteSpace(COM_Port) ?
-                new Microsoft.AspNetCore.Mvc.Rendering.SelectList(DrumManager.Current.Ports) :
-                new Microsoft.AspNetCore.Mvc.Rendering.SelectList(DrumManager.Current.Ports, COM_Port);
+                new Microsoft.AspNetCore.Mvc.Rendering.SelectList(Factory.GetPortNames()) :
+                new Microsoft.AspNetCore.Mvc.Rendering.SelectList(Factory.GetPortNames(), COM_Port);
 
         }
     }

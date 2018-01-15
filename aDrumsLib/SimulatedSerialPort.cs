@@ -7,6 +7,7 @@ namespace aDrumsLib
 {
     sealed class SimulatedSerialPort : ISerialPort
     {
+        public const string SimulatedSerialPortName = "COM_SIMULATED";
         public const byte MAX_PIN_COUNT = 37;
 
         private readonly Queue<byte[]> _answers = new Queue<byte[]>();
@@ -25,8 +26,10 @@ namespace aDrumsLib
         public bool DtrEnable { get; set; }
 
         public bool IsOpen { get; set; }
-        
-        public string PortName { get; set; } = nameof(SimulatedSerialPort);
+
+        public string PortName { get; set; } = SimulatedSerialPortName;
+
+        public int ReadTimeout { get; set; } = 30;
 
         private static readonly Random _rand = new Random();
 

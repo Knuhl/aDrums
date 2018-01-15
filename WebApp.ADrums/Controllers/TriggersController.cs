@@ -16,14 +16,14 @@ namespace WebApp.ADrums.Controllers
         [HttpGet]
         public IEnumerable<MidiTrigger> Get()
         {
-            return DrumManager.Current.Triggers;
+            return new DrumManager(string.Empty).Triggers;
         }
 
         // GET api/values/5
         [HttpGet("{id}")]
         public MidiTrigger Get(int id)
         {
-            return DrumManager.Current.Triggers
+            return new DrumManager(string.Empty).Triggers
                 .Where(x => (int)x.PinNumber == id)
                 .FirstOrDefault();
         }
@@ -32,9 +32,9 @@ namespace WebApp.ADrums.Controllers
         [HttpPost]
         public void Post([FromBody]MidiTrigger value)
         {
-            var i = DrumManager.Current.Triggers.FindIndex(x => x.PinNumber == value.PinNumber);
+            var i = new DrumManager(string.Empty).Triggers.FindIndex(x => x.PinNumber == value.PinNumber);
             if (1 > -1)
-                DrumManager.Current.Triggers[i] = value;
+                new DrumManager(string.Empty).Triggers[i] = value;
         }
 
         // PUT api/values/5

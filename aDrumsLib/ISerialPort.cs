@@ -23,7 +23,7 @@ namespace aDrumsLib
         //byte ParityReplace { get; set; }
         string PortName { get; set; }
         //int ReadBufferSize { get; set; }
-        //int ReadTimeout { get; set; }
+        int ReadTimeout { get; set; }
         //int ReceivedBytesThreshold { get; set; }
         //bool RtsEnable { get; set; }
         ////StopBits StopBits { get; set; }

@@ -16,8 +16,7 @@ namespace aDrumsLib
         private static string ResetBoard(string comPort)
         {
             var oldPorts = getPorts();
-            var s = Factory.getSerialPort();
-            s.PortName = comPort;
+            var s = Factory.GetSerialPort(comPort);
             s.BaudRate = 1200;
             s.Open();
             s.Close();
