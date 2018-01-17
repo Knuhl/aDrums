@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:win.WPF.aDrumsManager.Views"
              xmlns:mvvm="http://prismlibrary.com/"
              xmlns:dialogs="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
+             xmlns:oxy="http://oxyplot.org/wpf"
              mc:Ignorable="d" 
              mvvm:ViewModelLocator.AutoWireViewModel="True"
              dialogs:DialogParticipation.Register="{Binding}"
@@ -26,9 +27,18 @@
                       IsSynchronizedWithCurrentItem="True"
                       IsReadOnly="True" AutoGenerateColumns="False">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Trigger" Binding="{Binding Path=PinNumber, Mode=OneWay}" />
+                    <DataGridTextColumn Header="Trigger" Binding="{Binding Path=Trigger.PinNumber, Mode=OneWay}" />
+                    <DataGridTextColumn Header="Type" Binding="{Binding Path=TriggerType, Mode=OneWay}" />
                 </DataGrid.Columns>
             </DataGrid>
+        </DockPanel>
+        <DockPanel>
+            <local:TriggerView DockPanel.Dock="Top" DataContext="{Binding Path=SelectedTrigger}" />
+            
+            <DockPanel>
+                <CheckBox Content="Plot Current Pin Values" DockPanel.Dock="Top" IsChecked="{Binding Path=PlotCurrentPinValues, Mode=TwoWay}" HorizontalAlignment="Center" Margin="0,5" />
+                <oxy:PlotView Model="{Binding Path=CurrentValuePlot}" />
+            </DockPanel>
         </DockPanel>
     </DockPanel>
 </UserControl>

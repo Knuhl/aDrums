@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace aDrumsLib
 {
@@ -59,6 +57,7 @@ namespace aDrumsLib
     {
         MSG_GET_HANDSHAKE = 0,
         MSG_GET_PINCOUNT = 8,
+        MSG_GET_PINVALUE = 16,
         MSG_EEPROM = 100,
         MSG_pinType = 1,
         MSG_pinThreshold = 2,

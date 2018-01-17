@@ -171,17 +171,19 @@ void controlChange(byte channel, byte control, byte value) {
 #pragma endregion
 
 #pragma region ReadDrums
+int readPin(byte pin)
+{
+	if(pin >= MAX_PIN_SIZE || pinType[i] == PINTYPE_DISABLED)
+		return -1;
+	return getAnalogueValue(pin);
+}
+
 void readPins() {
 	for (byte i = 0; i < MAX_PIN_SIZE; i++)
 	{
-		switch (pinType[i])
-		{
-		case PINTYPE_DISABLED:
-			break;
-		default:
-			ReadDrum(i, getAnalogueValue(i));
-			break;
-		}
+		int pinValue = readPin(i);
+		if(pinValue >= 0)
+			ReadDrum(i, pinValue);
 	}
 }
 int getAnalogueValue(byte pin) {
@@ -223,6 +225,7 @@ byte getVelocity(byte pin, int analogue_value) {
 
 #define MSG_GET_HANDSHAKE 0
 #define MSG_GET_PINCOUNT 8
+#define MSG_GET_PINVALUE 16
 #define MSG_EEPROM 100
 #define MSG_pinType 1
 #define MSG_pinThreshold 2
@@ -235,6 +238,7 @@ void sysexCallback(byte command, byte size, byte* arrayPointer) {
 	{
 	case MSG_GET_HANDSHAKE: TX_SERIAL(command, VersionMajor, VersionMinor); break;
 	case MSG_GET_PINCOUNT: TX_SERIAL(command, MAX_PIN_SIZE, 0); break; 
+	case MSG_GET_PINVALUE: TX_SERIAL(command, arrayPointer[0], readPin(arrayPointer[0])); break;
 	case MSG_EEPROM: if (isSet) EEPROM_Save(); else EEPROM_Load(); TX_SERIAL(command, 1, 1); break;
 		caseCallBack(pinType);
 		caseCallBack(pinThreshold);

@@ -8,7 +8,16 @@
              mc:Ignorable="d" 
              mvvm:ViewModelLocator.AutoWireViewModel="True"
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid>
-            
-    </Grid>
+    <DockPanel>
+        <StackPanel Orientation="Vertical" DockPanel.Dock="Top">
+            <DockPanel>
+                <Label Content="Trigger Type:" Width="150" HorizontalContentAlignment="Right" DockPanel.Dock="Left" />
+                <ComboBox ItemsSource="{Binding Path=TriggerTypes, Mode=OneWay}" SelectedItem="{Binding Path=TriggerType, Mode=TwoWay}" />
+            </DockPanel>
+            <DockPanel>
+                <Label Content="Trigger Curve:" Width="150" HorizontalContentAlignment="Right" DockPanel.Dock="Left" />
+                <ComboBox ItemsSource="{Binding Path=CurveTypes, Mode=OneWay}" SelectedItem="{Binding Path=Trigger.Curve, Mode=TwoWay}" />
+            </DockPanel>
+        </StackPanel>
+    </DockPanel>
 </UserControl>

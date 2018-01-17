@@ -96,6 +96,12 @@ namespace aDrumsLib
             LoadSettings();
         }
 
+        public byte GetPinValue(Pins pin)
+        {
+            var pinValue = SerialD.RunCommand(SysExMsg.MSG_GET_PINVALUE, CommandType.Get, (byte) pin).Values[1];
+            return pinValue;
+        }
+
         public void Dispose()
         {
             Disconnect();
