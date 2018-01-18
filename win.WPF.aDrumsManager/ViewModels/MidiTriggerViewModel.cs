@@ -9,7 +9,7 @@ using win.WPF.aDrumsManager.Events;
 
 namespace win.WPF.aDrumsManager.ViewModels
 {
-    public class MidiTriggerViewModel : BindableBase
+    public class MidiTriggerViewModel : ViewModelBase
     {
         private readonly DrumManager _drumManager;
         private readonly IEventAggregator _eventAggregator;

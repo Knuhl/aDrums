@@ -7,7 +7,7 @@ using win.WPF.aDrumsManager.Events;
 
 namespace win.WPF.aDrumsManager.ViewModels
 {
-    public class ComPortsViewModel : ViewModelBase
+    public class ComPortsViewModel : DialogViewModelBase
     {
         private readonly IEventAggregator _eventAggregator;
 
@@ -48,6 +48,7 @@ namespace win.WPF.aDrumsManager.ViewModels
         private void BuildAvailablePorts()
         {
             _availablePorts = new ObservableCollection<string>(Factory.GetPortNames());
+            _availablePorts.Insert(0, SimulatorSerialPort.SimulatedSerialPortName);
             SelectedComPort = _availablePorts.Count == 1 ? _availablePorts[0] : null;
         }
         
@@ -57,7 +58,9 @@ namespace win.WPF.aDrumsManager.ViewModels
             try
             {
                 _eventAggregator.GetEvent<ApplicationBusyEvent>().Publish(true);
-                manager = new DrumManager(comPort);
+                manager = SimulatorSerialPort.SimulatedSerialPortName.Equals(comPort)
+                    ? new DrumManager(new SimulatorSerialPort())
+                    : new DrumManager(comPort);
             }
             catch (Exception e)
             {

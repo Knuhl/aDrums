@@ -10,14 +10,19 @@ using Microsoft.Practices.ObjectBuilder2;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using Prism.Commands;
 using Prism.Events;
 using win.WPF.aDrumsManager.Events;
 
 namespace win.WPF.aDrumsManager.ViewModels
 {
-    public class DrumManagerViewModel : ViewModelBase
+    public class DrumManagerViewModel : DialogViewModelBase
     {
         private readonly IEventAggregator _eventAggregator;
+
+        private Timer _timer;
+        private static readonly TimeSpan TimerPeriod = TimeSpan.FromMilliseconds(500);
+
         private DrumManager _drumManager;
         public DrumManager DrumManager
         {
@@ -26,6 +31,8 @@ namespace win.WPF.aDrumsManager.ViewModels
             {
                 _drumManager = value;
                 RaisePropertyChanged();
+                SaveToEepromCommand.RaiseCanExecuteChanged();
+                LoadFromEepromCommand.RaiseCanExecuteChanged();
             }
         }
 
@@ -71,9 +78,16 @@ namespace win.WPF.aDrumsManager.ViewModels
         }
 
         public PlotModel CurrentValuePlot { get; }
+        
+        private DelegateCommand _saveToEepromCommand;
+        public DelegateCommand SaveToEepromCommand => _saveToEepromCommand ?? (_saveToEepromCommand =
+                                                          new DelegateCommand(() => DrumManager.WriteSettingsToEEPROM(),
+                                                              () => DrumManager != null && DrumManager.IsConnected));
 
-        private Timer _timer;
-        private static readonly TimeSpan TimerPeriod = TimeSpan.FromMilliseconds(500);
+        private DelegateCommand _loadFromEepromCommand;
+        public DelegateCommand LoadFromEepromCommand => _loadFromEepromCommand ?? (_loadFromEepromCommand =
+                                                            new DelegateCommand(LoadSettingsFromEeprom,
+                                                                () => DrumManager != null && DrumManager.IsConnected));
 
         public DrumManagerViewModel(IDialogCoordinator dialogCoordinator, IEventAggregator eventAggregator) : base(dialogCoordinator)
         {
@@ -108,8 +122,7 @@ namespace win.WPF.aDrumsManager.ViewModels
 
         private void OnDrumManagerChanged(DrumManager drumManager)
         {
-            _timer?.Dispose();
-            _timer = null;
+            PlotCurrentPinValues = false;
             DrumManager?.Dispose();
             DrumManager = drumManager;
             TriggerCollection = new ObservableCollection<MidiTriggerViewModel>();
@@ -170,20 +183,66 @@ namespace win.WPF.aDrumsManager.ViewModels
         {
             DateTime timeStamp = DateTime.Now;
             ElementCollection<Series> series = (ElementCollection<Series>) state;
-            var pins = series.OfType<DataPointSeries>().Where(x => x.IsVisible && x.Tag is Pins).ToList();
-            if (!pins.Any()) return;
-            var values = pins.ToDictionary(x => x, x => DrumManager.GetPinValue((Pins) x.Tag));
-            Application.Current.Dispatcher.Invoke(() =>
+            
+            //DG.PPV.DEM 18.01.2018: all pins at once
+            var pinsSeries = series.OfType<DataPointSeries>().Where(x => x.IsVisible)
+                .ToDictionary(x => (Pins) x.Tag, x => x);
+
+            if (!pinsSeries.Any()) return;
+            ThreadPool.QueueUserWorkItem(wb =>
             {
-                CurrentValuePlot.Axes.Where(x => x.Position == AxisPosition.Bottom).OfType<DateTimeAxis>()
-                    .ForEach(x =>
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    List<byte> pinValues = DrumManager.GetAllPinValues();
+
+                    CurrentValuePlot.Axes.Where(x => x.Position == AxisPosition.Bottom).OfType<DateTimeAxis>()
+                        .ForEach(x =>
+                        {
+                            x.Minimum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(-15));
+                            x.Maximum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(5));
+                        });
+
+                    for (int i = 0; i < pinValues.Count; i++)
                     {
-                        x.Minimum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(-15));
-                        x.Maximum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(5));
-                    });
-                values.ForEach(x => x.Key.Points.Add(new DataPoint(DateTimeAxis.ToDouble(timeStamp), x.Value)));
-                CurrentValuePlot.InvalidatePlot(true);
+                        if (pinsSeries.ContainsKey((Pins) i))
+                            pinsSeries[(Pins) i].Points
+                                .Add(new DataPoint(DateTimeAxis.ToDouble(timeStamp), pinValues[i]));
+                    }
+                    
+                    CurrentValuePlot.InvalidatePlot(true);
+                });
             });
+            
+            //DG.PPV.DEM 18.01.2018: each pin by itself
+
+            //var pins = series.OfType<DataPointSeries>().Where(x => x.IsVisible && x.Tag is Pins).ToList();
+            //if (!pins.Any()) return;
+            //ThreadPool.QueueUserWorkItem(wb =>
+            //{
+            //    var values = pins.ToDictionary(x => x, x => DrumManager.GetPinValue((Pins) x.Tag));
+            //    Application.Current.Dispatcher.Invoke(() =>
+            //    {
+            //        CurrentValuePlot.Axes.Where(x => x.Position == AxisPosition.Bottom).OfType<DateTimeAxis>()
+            //            .ForEach(x =>
+            //            {
+            //                x.Minimum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(-15));
+            //                x.Maximum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(5));
+            //            });
+            //        values.ForEach(x => x.Key.Points.Add(new DataPoint(DateTimeAxis.ToDouble(timeStamp), x.Value)));
+            //        CurrentValuePlot.InvalidatePlot(true);
+            //    });
+            //});
+        }
+        
+        private void LoadSettingsFromEeprom()
+        {
+            PlotCurrentPinValues = false;
+            DrumManager.LoadSettingsFromEEPROM();
+            TriggerCollection.ForEach(x => x.RaisePropertiesChanged());
+            TriggerCollection.ForEach(trigger =>
+                _eventAggregator.GetEvent<TriggerActiveChangedEvent>().Publish(
+                    new KeyValuePair<Pins, bool>(trigger.Trigger.PinNumber,
+                        trigger.TriggerType != TriggerType.Disabled)));
         }
     }
 }

@@ -4,10 +4,10 @@ using System.Linq;
 
 namespace aDrumsLib
 {
-    internal class SysExMessage
+    public class SysExMessage
     {
-        internal const byte START_SYSEX = 0xF0; // start a MIDI SysEx message
-        internal const byte END_SYSEX = 0xF7; // end a MIDI SysEx message
+        public const byte START_SYSEX = 0xF0; // start a MIDI SysEx message
+        public const byte END_SYSEX = 0xF7; // end a MIDI SysEx message
 
         public byte Command { get; set; }
 
@@ -25,6 +25,10 @@ namespace aDrumsLib
             Command = l.First();
             l.RemoveAt(0);
             Values = l.ToArray();
+            if (Values.Length < 1)
+            {
+
+            }
         }
 
         public SysExMessage() { }

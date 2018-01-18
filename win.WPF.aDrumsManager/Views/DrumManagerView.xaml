@@ -21,6 +21,8 @@
                         </MultiBinding>
                     </TextBlock.Text>
                 </TextBlock>
+                <Button Content="Save to EEPROM" Command="{Binding Path=SaveToEepromCommand}" />
+                <Button Content="Load from EEPROM" Command="{Binding Path=LoadFromEepromCommand}" />
             </StackPanel>
             <DataGrid ItemsSource="{Binding Path=TriggerCollection}"
                       SelectedItem="{Binding Path=SelectedTrigger, Mode=TwoWay}"

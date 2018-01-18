@@ -11,8 +11,6 @@ namespace aDrumsLib
             {
                 case null:
                     return null;
-                case SimulatedSerialPort.SimulatedSerialPortName:
-                    return new SimulatedSerialPort();
                 default:
                     var serialPort = new winSerialPort();
                     serialPort.PortName = portName;
@@ -24,7 +22,6 @@ namespace aDrumsLib
 
         private static IEnumerable<string> GetPortNamesEnumerable()
         {
-            yield return SimulatedSerialPort.SimulatedSerialPortName;
             foreach (var winSerialPortName in System.IO.Ports.SerialPort.GetPortNames())
                 yield return winSerialPortName;
         }

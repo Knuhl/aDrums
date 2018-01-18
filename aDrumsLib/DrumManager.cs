@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace aDrumsLib
 {
@@ -7,29 +8,18 @@ namespace aDrumsLib
     {
         public ISerialPort SerialPort { get; }
 
+        private readonly object _serialLock = new object();
         private SerialDevice SerialD { get; set; }
         
         public string Jacks { get; private set; }
 
-        public Version FW_Version
-        {
-            get
-            {
-                return SerialD != null ? SerialD.aDrumVersion : null;
-            }
-        }
+        public Version FW_Version => SerialD?.aDrumVersion;
 
         public int PinCount { get; set; }
 
         public List<MidiTrigger> Triggers { get; set; }
 
-        public bool IsConnected
-        {
-            get
-            {
-                return SerialD != null;
-            }
-        }
+        public bool IsConnected => SerialD != null;
 
         public DrumManager(string comPort) : this(Factory.GetSerialPort(comPort))
         {
@@ -51,55 +41,72 @@ namespace aDrumsLib
         
         private void Connect()
         {
-            SerialD = new SerialDevice(SerialPort);
+            lock (_serialLock)
+            {
+                SerialD = new SerialDevice(SerialPort);
 
-            PinCount = SerialD.RunCommand(SysExMsg.MSG_GET_PINCOUNT, CommandType.Get).Values[0];
-
+                PinCount = SerialD.RunCommand(SysExMsg.MSG_GET_PINCOUNT, CommandType.Get).Values[0];
+            }
             LoadSettings();
         }
 
         private void Disconnect()
         {
-            if (SerialD?.IsOpen == true) SerialD.Close();
-            SerialD = null;
+            lock (_serialLock)
+            {
+                if (SerialD?.IsOpen == true) SerialD.Close();
+                SerialD = null;
+            }
+
             Triggers = null;
         }
 
         public void LoadSettings()
         {
-            var lTriggers = new List<MidiTrigger>();
-            for (int i = 0; i < PinCount; i++)
+            if (Triggers == null)
+                Triggers = Enumerable.Range(0, PinCount).Select(i => new MidiTrigger((Pins) i)).ToList();
+
+            foreach (var t in Triggers)
             {
-                var t = new MidiTrigger((Pins)i);
-                t.getValues(SerialD);
-                lTriggers.Add(t);
+                lock (_serialLock)
+                    t.getValues(SerialD);
             }
-            Triggers = lTriggers;
         }
 
         public void SaveSettings()
         {
             foreach (var t in Triggers)
             {
-                t.setValues(SerialD);
+                lock (_serialLock)
+                    t.setValues(SerialD);
             }
         }
 
         public void WriteSettingsToEEPROM()
         {
-            SerialD.Send(new SysExMessage(SysExMsg.MSG_EEPROM, CommandType.Set).ToArray());
+            SaveSettings();
+            lock (_serialLock)
+                SerialD.Send(new SysExMessage(SysExMsg.MSG_EEPROM, CommandType.Set).ToArray());
         }
 
         public void LoadSettingsFromEEPROM()
         {
-            SerialD.Send(new SysExMessage(SysExMsg.MSG_EEPROM, CommandType.Get).ToArray());
+            lock (_serialLock)
+                SerialD.Send(new SysExMessage(SysExMsg.MSG_EEPROM, CommandType.Get).ToArray());
             LoadSettings();
         }
 
         public byte GetPinValue(Pins pin)
         {
-            var pinValue = SerialD.RunCommand(SysExMsg.MSG_GET_PINVALUE, CommandType.Get, (byte) pin).Values[1];
-            return pinValue;
+            lock (_serialLock)
+                return SerialD.RunCommand(SysExMsg.MSG_GET_PINVALUE, CommandType.Get, (byte) pin).Values[1];
+        }
+
+        public List<byte> GetAllPinValues()
+        {
+            lock (_serialLock)
+                return SerialD.RunCommand(SysExMsg.MSG_GET_PINVALUE, CommandType.Get, byte.MaxValue).Values.Skip(1)
+                    .ToList();
         }
 
         public void Dispose()

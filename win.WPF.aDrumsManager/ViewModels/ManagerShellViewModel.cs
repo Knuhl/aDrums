@@ -7,7 +7,7 @@ using win.WPF.aDrumsManager.Events;
 
 namespace win.WPF.aDrumsManager.ViewModels
 {
-    public class ManagerShellViewModel : ViewModelBase
+    public class ManagerShellViewModel : DialogViewModelBase
     {
         private readonly IRegionManager _regionManager;
         private readonly IEventAggregator _eventAggregator;

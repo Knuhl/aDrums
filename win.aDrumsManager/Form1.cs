@@ -1,12 +1,6 @@
 ﻿using aDrumsLib;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace aDrum
@@ -20,15 +14,14 @@ namespace aDrum
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            textBox1.Text = String.Join(Environment.NewLine, DrumManager.getCOMPorts());
+            textBox1.Text = String.Join(Environment.NewLine, Factory.GetPortNames());
 
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            using (var dm = new DrumManager())
+            using (var dm = new DrumManager(Factory.GetPortNames()[0]))
             {
-                dm.Connect();
                 dm.Triggers.ElementAt(2).Threshold = 100;
                 dm.SaveSettings();
                 dm.LoadSettings();
