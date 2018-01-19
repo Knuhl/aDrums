@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using aDrumsLib;
+using win.aDrumsSimulator.Signals;
 
 namespace win.aDrumsSimulator
 {
@@ -12,12 +13,13 @@ namespace win.aDrumsSimulator
     {
         public const byte MaxPinCount = 37;
         public readonly Queue<byte[]> Answers = new Queue<byte[]>();
-        private static readonly Random Rand = new Random();
-        
+
         private byte[] _pinType = new byte[MaxPinCount];
         private byte[] _pinThreshold = new byte[MaxPinCount];
         private byte[] _pinNoteOnThreshold = new byte[MaxPinCount];
         private byte[] _pinPitch = new byte[MaxPinCount];
+
+        private readonly SignalGenerator[] _signalGenerators = new SignalGenerator[MaxPinCount];
 
         private readonly Version _currentVersion;
         private readonly string _fileName = "aDrumSimulator.eeprom";
@@ -27,6 +29,9 @@ namespace win.aDrumsSimulator
             _currentVersion =
                 new Version(FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion);
             GetFromEeprom(_fileName, _currentVersion);
+
+            for (byte i = 0; i < MaxPinCount; i++)
+                _signalGenerators[i] = new OnOffSignal(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
         }
 
         internal void ExecuteCommand(SysExMessage msg)
@@ -124,12 +129,7 @@ namespace win.aDrumsSimulator
         {
             if (pin >= MaxPinCount || _pinType[pin] == (byte) TriggerType.Disabled)
                 return byte.MinValue;
-            byte value = (byte) Rand.Next(byte.MinValue, byte.MaxValue);
-
-            while (value == SysExMessage.START_SYSEX || value == SysExMessage.END_SYSEX)
-                value = (byte) Rand.Next(byte.MinValue, byte.MaxValue);
-
-            return value;
+            return _signalGenerators[pin].GenerateValue();
         }
 
         private void SetOrGetArrayValue(bool set, ref byte[] array, byte command, byte[] values)

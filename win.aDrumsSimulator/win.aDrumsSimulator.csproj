@@ -42,6 +42,9 @@
     <Compile Include="BoardSimulation.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Signals\OnOffSignal.cs" />
+    <Compile Include="Signals\SignalGenerator.cs" />
+    <Compile Include="Signals\SineSignal.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

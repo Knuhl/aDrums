@@ -21,7 +21,7 @@ namespace win.WPF.aDrumsManager.ViewModels
         private readonly IEventAggregator _eventAggregator;
 
         private Timer _timer;
-        private static readonly TimeSpan TimerPeriod = TimeSpan.FromMilliseconds(500);
+        private static readonly TimeSpan TimerPeriod = TimeSpan.FromMilliseconds(100);
 
         private DrumManager _drumManager;
         public DrumManager DrumManager
@@ -76,7 +76,7 @@ namespace win.WPF.aDrumsManager.ViewModels
                     _timer?.Dispose();
             }
         }
-
+        
         public PlotModel CurrentValuePlot { get; }
         
         private DelegateCommand _saveToEepromCommand;
