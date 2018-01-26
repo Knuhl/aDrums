@@ -19,10 +19,7 @@ namespace win.WPF.aDrumsManager.ViewModels
     public class DrumManagerViewModel : DialogViewModelBase
     {
         private readonly IEventAggregator _eventAggregator;
-
-        private Timer _timer;
-        private static readonly TimeSpan TimerPeriod = TimeSpan.FromMilliseconds(100);
-
+        
         private DrumManager _drumManager;
         public DrumManager DrumManager
         {
@@ -47,6 +44,9 @@ namespace win.WPF.aDrumsManager.ViewModels
             }
         }
 
+        private readonly object _pinValuesLock = new object();
+        private Dictionary<DateTime, List<byte>> _pinValues = new Dictionary<DateTime, List<byte>>();
+
         private MidiTriggerViewModel _selectedTrigger;
         public MidiTriggerViewModel SelectedTrigger
         {
@@ -68,12 +68,7 @@ namespace win.WPF.aDrumsManager.ViewModels
                 _plotCurrentPinValues = value;
                 RaisePropertyChanged();
                 if (value)
-                {
                     CurrentValuePlot.Series.OfType<DataPointSeries>().ForEach(x => x.Points.Clear());
-                    _timer = new Timer(PinValueTimerCallback, CurrentValuePlot.Series, TimeSpan.Zero, TimerPeriod);
-                }
-                else
-                    _timer?.Dispose();
             }
         }
         
@@ -118,6 +113,63 @@ namespace win.WPF.aDrumsManager.ViewModels
                 IsZoomEnabled = false,
                 IsPanEnabled = false
             });
+
+            ThreadPool.QueueUserWorkItem(wb => GetPinsThreadCallback());
+            ThreadPool.QueueUserWorkItem(wb => UpdateUiWithPinValuesThreadCallback());
+        }
+
+        private void GetPinsThreadCallback()
+        {
+            while (true)
+            {
+                if (DrumManager == null || !PlotCurrentPinValues)
+                    continue;
+                lock (_pinValuesLock)
+                    _pinValues.Add(DateTime.Now, DrumManager.GetAllPinValues());
+                Thread.Sleep(1);
+            }
+        }
+
+        private void UpdateUiWithPinValuesThreadCallback()
+        {
+            while (true)
+            {
+                Dictionary<DateTime, List<byte>> pinValuesToShow;
+                lock(_pinValuesLock)
+                {
+                    pinValuesToShow = new Dictionary<DateTime, List<byte>>(_pinValues);
+                    _pinValues.Clear();
+                }
+
+                if (pinValuesToShow.Count > 0)
+                {
+                    DateTime timeStamp = pinValuesToShow.Last().Key;
+                    var pinsSeries = CurrentValuePlot.Series.OfType<DataPointSeries>().Where(x => x.IsVisible && x.Tag is Pins).ToDictionary(x => (Pins)x.Tag, x => x);
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        CurrentValuePlot.Axes.Where(x => x.Position == AxisPosition.Bottom).OfType<DateTimeAxis>()
+                            .ForEach(x =>
+                            {
+                                x.Minimum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(-15));
+                                x.Maximum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(5));
+                            });
+
+                        foreach (var value in pinValuesToShow)
+                        {
+                            for (int i = 0; i < value.Value.Count; i++)
+                            {
+                                if (pinsSeries.ContainsKey((Pins)i))
+                                    pinsSeries[(Pins)i].Points.Add(new DataPoint(DateTimeAxis.ToDouble(value.Key), value.Value[i]));
+                            }
+                        }
+
+                        CurrentValuePlot.InvalidatePlot(true);
+                    });
+                }
+
+                Thread.Sleep(200);
+            }
         }
 
         private void OnDrumManagerChanged(DrumManager drumManager)
@@ -170,68 +222,9 @@ namespace win.WPF.aDrumsManager.ViewModels
         
         private void OnTriggerActiveChanged(KeyValuePair<Pins, bool> keyValuePair)
         {
-            bool isFirstActiveTrigger = CurrentValuePlot.Series.All(x => !x.IsVisible);
-            if (isFirstActiveTrigger)
-                _timer?.Change(TimeSpan.Zero, TimerPeriod);
-
             var series = CurrentValuePlot.Series.Single(x => ((Pins) x.Tag) == keyValuePair.Key);
             series.IsVisible = keyValuePair.Value;
             CurrentValuePlot.InvalidatePlot(true);
-        }
-        
-        private void PinValueTimerCallback(object state)
-        {
-            DateTime timeStamp = DateTime.Now;
-            ElementCollection<Series> series = (ElementCollection<Series>) state;
-            
-            //DG.PPV.DEM 18.01.2018: all pins at once
-            var pinsSeries = series.OfType<DataPointSeries>().Where(x => x.IsVisible)
-                .ToDictionary(x => (Pins) x.Tag, x => x);
-
-            if (!pinsSeries.Any()) return;
-            ThreadPool.QueueUserWorkItem(wb =>
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    List<byte> pinValues = DrumManager.GetAllPinValues();
-
-                    CurrentValuePlot.Axes.Where(x => x.Position == AxisPosition.Bottom).OfType<DateTimeAxis>()
-                        .ForEach(x =>
-                        {
-                            x.Minimum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(-15));
-                            x.Maximum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(5));
-                        });
-
-                    for (int i = 0; i < pinValues.Count; i++)
-                    {
-                        if (pinsSeries.ContainsKey((Pins) i))
-                            pinsSeries[(Pins) i].Points
-                                .Add(new DataPoint(DateTimeAxis.ToDouble(timeStamp), pinValues[i]));
-                    }
-                    
-                    CurrentValuePlot.InvalidatePlot(true);
-                });
-            });
-            
-            //DG.PPV.DEM 18.01.2018: each pin by itself
-
-            //var pins = series.OfType<DataPointSeries>().Where(x => x.IsVisible && x.Tag is Pins).ToList();
-            //if (!pins.Any()) return;
-            //ThreadPool.QueueUserWorkItem(wb =>
-            //{
-            //    var values = pins.ToDictionary(x => x, x => DrumManager.GetPinValue((Pins) x.Tag));
-            //    Application.Current.Dispatcher.Invoke(() =>
-            //    {
-            //        CurrentValuePlot.Axes.Where(x => x.Position == AxisPosition.Bottom).OfType<DateTimeAxis>()
-            //            .ForEach(x =>
-            //            {
-            //                x.Minimum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(-15));
-            //                x.Maximum = DateTimeAxis.ToDouble(timeStamp.AddSeconds(5));
-            //            });
-            //        values.ForEach(x => x.Key.Points.Add(new DataPoint(DateTimeAxis.ToDouble(timeStamp), x.Value)));
-            //        CurrentValuePlot.InvalidatePlot(true);
-            //    });
-            //});
         }
         
         private void LoadSettingsFromEeprom()
