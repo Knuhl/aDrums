@@ -35,8 +35,15 @@ namespace win.aDrumsSimulator
         {
             while (true)
             {
-                if (_connection != null && _connection.Answers.Count > 0)
-                    _server.PushMessage(_connection.Answers.Dequeue());
+                try
+                {
+                    if (_connection != null && _connection.Answers.Count > 0)
+                        _server.PushMessage(_connection.Answers.Dequeue());
+                }
+                catch (Exception e)
+                {
+                    OnError(e);
+                }
             }
         }
 
