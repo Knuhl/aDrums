@@ -34,12 +34,18 @@ namespace win.aDrumsSimulator
                 _signalGenerators[i] = new OnOffSignal(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
         }
 
+        KeyValuePair<bool, SysExMsg> _lastCommand;
+
         internal void ExecuteCommand(SysExMessage msg)
         {
             bool isSet = (msg.Command & 1) > 0;
             SysExMsg cmd = (SysExMsg)(msg.Command >> 1);
-            Program.Log($"{(isSet ? "SET" : "GET")} {cmd} " + msg.Values.Aggregate(string.Empty,
-                            (s, b) => s + b.ToString("X") + " | ", s => s.TrimEnd(' ', '|')));
+            if (_lastCommand.Key != isSet || _lastCommand.Value != cmd)
+            {
+                Program.Log($"{(isSet ? "SET" : "GET")} {cmd} " + msg.Values.Aggregate(string.Empty,
+                                  (s, b) => s + b.ToString("X") + " | ", s => s.TrimEnd(' ', '|')));
+                _lastCommand = new KeyValuePair<bool, SysExMsg>(isSet, cmd);
+            }
             switch(cmd)
             {
                 case SysExMsg.MSG_GET_HANDSHAKE:
