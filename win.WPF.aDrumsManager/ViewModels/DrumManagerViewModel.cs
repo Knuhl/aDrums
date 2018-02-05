@@ -114,6 +114,8 @@ namespace win.WPF.aDrumsManager.ViewModels
                 IsPanEnabled = false
             });
 
+            //TODO DG.PPV.DEM 05.02.2018: Trigger Curve via http://docs.oxyplot.org/en/latest/models/series/FunctionSeries.html
+
             ThreadPool.QueueUserWorkItem(wb => GetPinsThreadCallback());
             ThreadPool.QueueUserWorkItem(wb => UpdateUiWithPinValuesThreadCallback());
         }
