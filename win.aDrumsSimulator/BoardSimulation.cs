@@ -31,7 +31,7 @@ namespace win.aDrumsSimulator
             GetFromEeprom(_fileName, _currentVersion);
 
             for (byte i = 0; i < MaxPinCount; i++)
-                _signalGenerators[i] = new OnOffSignal(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+                _signalGenerators[i] = new StepOnOffSignal(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100), 5);
         }
 
         KeyValuePair<bool, SysExMsg> _lastCommand;

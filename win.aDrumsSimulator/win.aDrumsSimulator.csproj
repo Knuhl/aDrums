@@ -45,6 +45,7 @@
     <Compile Include="Signals\OnOffSignal.cs" />
     <Compile Include="Signals\SignalGenerator.cs" />
     <Compile Include="Signals\SineSignal.cs" />
+    <Compile Include="Signals\StepOnOffSignal.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
