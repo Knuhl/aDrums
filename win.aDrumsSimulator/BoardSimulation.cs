@@ -18,6 +18,10 @@ namespace win.aDrumsSimulator
         private byte[] _pinThreshold = new byte[MaxPinCount];
         private byte[] _pinNoteOnThreshold = new byte[MaxPinCount];
         private byte[] _pinPitch = new byte[MaxPinCount];
+        private readonly TriggerCurve[] _pinCurve =
+            Enumerable.Range(0, MaxPinCount).Select(x => new TriggerCurve(CurveType.Linear)).ToArray();
+        private readonly TriggerCurveModification[] _pinCurveModifications =
+            Enumerable.Range(0, MaxPinCount).Select(x => new TriggerCurveModification()).ToArray();
 
         private readonly SignalGenerator[] _signalGenerators = new SignalGenerator[MaxPinCount];
 
@@ -80,7 +84,31 @@ namespace win.aDrumsSimulator
                 case SysExMsg.MSG_pinPitch:
                     SetOrGetArrayValue(isSet, ref _pinPitch, msg.Command, msg.Values);
                     break;
+                case SysExMsg.MSG_pinCurve:
+                    SetOrGetCurve(isSet, msg.Command, msg.Values);
+                    break;
+                case SysExMsg.MSG_pinCurveModifications:
+                    SetOrGetCurveModifications(isSet, msg.Command, msg.Values);
+                    break;
             }
+        }
+        
+        private void SetOrGetCurve(bool isSet, byte cmd, byte[] msgValues)
+        {
+            byte pin = msgValues[0];
+            if (isSet)
+                _pinCurve[pin] = new TriggerCurve(msgValues.Skip(1).ToArray());
+            else
+                Answers.Enqueue(SerialMessage(cmd, pin, _pinCurve[pin].ToByteArray()));
+        }
+
+        private void SetOrGetCurveModifications(bool isSet, byte cmd, byte[] msgValues)
+        {
+            byte pin = msgValues[0];
+            if (isSet)
+                _pinCurveModifications[pin] = TriggerCurveModification.FromBytes(msgValues.Skip(1).ToArray());
+            else
+                Answers.Enqueue(SerialMessage(cmd, pin, _pinCurveModifications[pin].ToByteArray()));
         }
 
         private void GetFromEeprom(string fileName, Version currentVersion)
@@ -104,6 +132,20 @@ namespace win.aDrumsSimulator
                     _pinThreshold[i] = (byte) fs.ReadByte();
                 for (int i = 0; i < MaxPinCount; i++)
                     _pinNoteOnThreshold[i] = (byte) fs.ReadByte();
+                for (int i = 0; i < MaxPinCount; i++)
+                {
+                    byte[] bytes = new byte[TriggerCurve.Size];
+                    for (int j = 0; j < bytes.Length; j++)
+                        bytes[j] = (byte) fs.ReadByte();
+                    _pinCurve[i] = new TriggerCurve(bytes);
+                }
+                for (int i = 0; i < MaxPinCount; i++)
+                {
+                    byte[] bytes = new byte[fs.ReadByte()];
+                    for (int j = 0; j < bytes.Length; j++)
+                        bytes[j] = (byte) fs.ReadByte();
+                    _pinCurveModifications[i] = TriggerCurveModification.FromBytes(bytes);
+                }
             }
         }
 
@@ -129,6 +171,16 @@ namespace win.aDrumsSimulator
                 yield return b;
             foreach (var b in _pinNoteOnThreshold)
                 yield return b;
+            foreach (var curve in _pinCurve)
+            {
+                foreach (var b in curve.GetBytes())
+                    yield return b;
+            }
+            foreach (var mod in _pinCurveModifications)
+            {
+                foreach (var b in mod.GetBytes())
+                    yield return b;
+            }
         }
 
         private byte GetPinValue(byte pin)

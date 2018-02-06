@@ -13,7 +13,7 @@ namespace aDrumsLib
         
         public string Jacks { get; private set; }
 
-        public Version FW_Version => SerialD?.aDrumVersion;
+        public Version FwVersion => SerialD?.aDrumVersion;
 
         public int PinCount { get; set; }
 
@@ -69,7 +69,7 @@ namespace aDrumsLib
             foreach (var t in Triggers)
             {
                 lock (_serialLock)
-                    t.getValues(SerialD);
+                    t.GetValues(SerialD);
             }
         }
 
@@ -78,18 +78,18 @@ namespace aDrumsLib
             foreach (var t in Triggers)
             {
                 lock (_serialLock)
-                    t.setValues(SerialD);
+                    t.SetValues(SerialD);
             }
         }
 
-        public void WriteSettingsToEEPROM()
+        public void WriteSettingsToEeprom()
         {
             SaveSettings();
             lock (_serialLock)
                 SerialD.Send(new SysExMessage(SysExMsg.MSG_EEPROM, CommandType.Set).ToArray());
         }
 
-        public void LoadSettingsFromEEPROM()
+        public void LoadSettingsFromEeprom()
         {
             lock (_serialLock)
                 SerialD.Send(new SysExMessage(SysExMsg.MSG_EEPROM, CommandType.Get).ToArray());

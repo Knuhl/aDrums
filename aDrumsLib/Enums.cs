@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace aDrumsLib
+﻿namespace aDrumsLib
 {
     public enum ConnStatus
     {
@@ -24,9 +18,7 @@ namespace aDrumsLib
     {
         Linear,
         Log,
-        Exp,
-        Max,
-        Mid,
+        Exp
     }
 
     public enum Pins: byte

@@ -66,6 +66,7 @@ namespace win.WPF.aDrumsManager.ViewModels
             {
                 ShowMessage(e.ToString(), "Could not Connect to aDrums at port " + comPort);
                 manager = null;
+                SelectedComPort = null;
             }
             
             _eventAggregator.GetEvent<PubSubEvent<DrumManager>>().Publish(manager);

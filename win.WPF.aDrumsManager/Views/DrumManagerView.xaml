@@ -17,7 +17,7 @@
                 <TextBlock>
                     <TextBlock.Text>
                         <MultiBinding StringFormat="{}aDrums Version {0}">
-                            <Binding Path="DrumManager.FW_Version" Mode="OneWay" />
+                            <Binding Path="DrumManager.FwVersion" Mode="OneWay" />
                         </MultiBinding>
                     </TextBlock.Text>
                 </TextBlock>

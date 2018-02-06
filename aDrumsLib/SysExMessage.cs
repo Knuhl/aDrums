@@ -12,7 +12,7 @@ namespace aDrumsLib
         public byte Command { get; set; }
 
         public byte[] Values { get; set; }
-
+        
         public SysExMessage(SysExMsg command, CommandType type, params byte[] values)
         {
             Command = (byte)((((byte)command) << 1) | (byte)type);
@@ -67,6 +67,8 @@ namespace aDrumsLib
         MSG_pinThreshold = 2,
         MSG_pinNoteOnThreshold = 3,
         MSG_pinPitch = 4,
+        MSG_pinCurve = 5,
+        MSG_pinCurveModifications = 6
     }
     #endregion
 }

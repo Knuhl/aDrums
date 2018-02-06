@@ -76,7 +76,7 @@ namespace win.WPF.aDrumsManager.ViewModels
         
         private DelegateCommand _saveToEepromCommand;
         public DelegateCommand SaveToEepromCommand => _saveToEepromCommand ?? (_saveToEepromCommand =
-                                                          new DelegateCommand(() => DrumManager.WriteSettingsToEEPROM(),
+                                                          new DelegateCommand(() => DrumManager.WriteSettingsToEeprom(),
                                                               () => DrumManager != null && DrumManager.IsConnected));
 
         private DelegateCommand _loadFromEepromCommand;
@@ -113,9 +113,7 @@ namespace win.WPF.aDrumsManager.ViewModels
                 IsZoomEnabled = false,
                 IsPanEnabled = false
             });
-
-            //TODO DG.PPV.DEM 05.02.2018: Trigger Curve via http://docs.oxyplot.org/en/latest/models/series/FunctionSeries.html
-
+            
             ThreadPool.QueueUserWorkItem(wb => GetPinsThreadCallback());
             ThreadPool.QueueUserWorkItem(wb => UpdateUiWithPinValuesThreadCallback());
         }
@@ -192,7 +190,7 @@ namespace win.WPF.aDrumsManager.ViewModels
             var toRemove = TriggerCollection.Where(x => x.Trigger.PinNumber == trigger.PinNumber).ToList();
             toRemove.ForEach(x => TriggerCollection.Remove(x));
 
-            TriggerCollection.Add(new MidiTriggerViewModel(DrumManager, trigger, _eventAggregator));
+            TriggerCollection.Add(new MidiTriggerViewModel(_eventAggregator, DrumManager, trigger));
             
             var seriesToRemove = CurrentValuePlot.Series.Where(x => x.Tag as Pins? == trigger.PinNumber).ToList();
             seriesToRemove.ForEach(x => CurrentValuePlot.Series.Remove(x));
@@ -232,7 +230,7 @@ namespace win.WPF.aDrumsManager.ViewModels
         private void LoadSettingsFromEeprom()
         {
             PlotCurrentPinValues = false;
-            DrumManager.LoadSettingsFromEEPROM();
+            DrumManager.LoadSettingsFromEeprom();
             TriggerCollection.ForEach(x => x.RaisePropertiesChanged());
             TriggerCollection.ForEach(trigger =>
                 _eventAggregator.GetEvent<TriggerActiveChangedEvent>().Publish(

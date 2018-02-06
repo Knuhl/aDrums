@@ -52,6 +52,8 @@
     <Compile Include="SerialDevice.cs" />
     <Compile Include="SysExMessage.cs" />
     <Compile Include="MidiTrigger.cs" />
+    <Compile Include="TriggerCurve.cs" />
+    <Compile Include="TriggerCurveModification.cs" />
     <Compile Include="winSerialPort.cs">
       <SubType>Component</SubType>
     </Compile>
