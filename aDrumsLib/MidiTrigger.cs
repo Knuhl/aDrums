@@ -20,12 +20,12 @@ namespace aDrumsLib
         
         internal IEnumerable<SysExMessage> GetSysExMsg(CommandType ct)
         {
-            yield return new SysExMessage(SysExMsg.MSG_pinType, ct, (byte)PinNumber, (byte)Type);
-            yield return new SysExMessage(SysExMsg.MSG_pinThreshold, ct, (byte)PinNumber, Threshold);
-            yield return new SysExMessage(SysExMsg.MSG_pinNoteOnThreshold, ct, (byte)PinNumber, DurationThreshold);
-            yield return new SysExMessage(SysExMsg.MSG_pinPitch, ct, (byte)PinNumber, Pitch);
-            yield return new SysExMessage(SysExMsg.MSG_pinCurve, ct, GetCurveBytes().ToArray());
-            yield return new SysExMessage(SysExMsg.MSG_pinCurveModifications, ct, GetCurveModificationBytes().ToArray());
+            yield return new SysExMessage(SysExMsg.PinType, ct, (byte)PinNumber, (byte)Type);
+            yield return new SysExMessage(SysExMsg.PinThreshold, ct, (byte)PinNumber, Threshold);
+            yield return new SysExMessage(SysExMsg.PinNote, ct, (byte)PinNumber, DurationThreshold);
+            yield return new SysExMessage(SysExMsg.PinPitch, ct, (byte)PinNumber, Pitch);
+            yield return new SysExMessage(SysExMsg.PinCurve, ct, GetCurveBytes().ToArray());
+            yield return new SysExMessage(SysExMsg.PinCurveModifications, ct, GetCurveModificationBytes().ToArray());
         }
 
         internal void SetValues(SerialDevice sd)
@@ -46,22 +46,22 @@ namespace aDrumsLib
             var c = (SysExMsg)(msg.Command >> 1);
             switch (c)
             {
-                case SysExMsg.MSG_pinType:
+                case SysExMsg.PinType:
                     Type = (TriggerType)msg.Values[1];
                     break;
-                case SysExMsg.MSG_pinThreshold:
+                case SysExMsg.PinThreshold:
                     Threshold = msg.Values[1];
                     break;
-                case SysExMsg.MSG_pinNoteOnThreshold:
+                case SysExMsg.PinNote:
                     DurationThreshold = msg.Values[1];
                     break;
-                case SysExMsg.MSG_pinPitch:
+                case SysExMsg.PinPitch:
                     Pitch = msg.Values[1];
                     break;
-                case SysExMsg.MSG_pinCurve:
+                case SysExMsg.PinCurve:
                     Curve = new TriggerCurve(msg.Values.Skip(1).ToArray());
                     break;
-                case SysExMsg.MSG_pinCurveModifications:
+                case SysExMsg.PinCurveModifications:
                     CurveModification.ClearAndSetFromBytes(msg.Values.Skip(1).ToArray());
                     break;
                 default:

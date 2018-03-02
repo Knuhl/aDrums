@@ -59,16 +59,16 @@ namespace aDrumsLib
 
     public enum SysExMsg : byte
     {
-        MSG_GET_HANDSHAKE = 0,
-        MSG_GET_PINCOUNT = 8,
-        MSG_GET_PINVALUE = 16,
-        MSG_EEPROM = 100,
-        MSG_pinType = 1,
-        MSG_pinThreshold = 2,
-        MSG_pinNoteOnThreshold = 3,
-        MSG_pinPitch = 4,
-        MSG_pinCurve = 5,
-        MSG_pinCurveModifications = 6
+        Handshake = 0,
+        GetPinCount = 8,
+        GetPinValue = 16,
+        Eeprom = 100,
+        PinType = 1,
+        PinThreshold = 2,
+        PinNote = 3,
+        PinPitch = 4,
+        PinCurve = 5,
+        PinCurveModifications = 6
     }
     #endregion
 }

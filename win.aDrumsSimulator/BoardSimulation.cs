@@ -16,7 +16,7 @@ namespace win.aDrumsSimulator
 
         private byte[] _pinType = new byte[MaxPinCount];
         private byte[] _pinThreshold = new byte[MaxPinCount];
-        private byte[] _pinNoteOnThreshold = new byte[MaxPinCount];
+        private byte[] _pinNote = new byte[MaxPinCount];
         private byte[] _pinPitch = new byte[MaxPinCount];
         private readonly TriggerCurve[] _pinCurve =
             Enumerable.Range(0, MaxPinCount).Select(x => new TriggerCurve(CurveType.Linear)).ToArray();
@@ -52,13 +52,13 @@ namespace win.aDrumsSimulator
             }
             switch(cmd)
             {
-                case SysExMsg.MSG_GET_HANDSHAKE:
+                case SysExMsg.Handshake:
                     Answers.Enqueue(SerialMessage(msg.Command, (byte) _currentVersion.Major, (byte) _currentVersion.Minor));
                     break;
-                case SysExMsg.MSG_GET_PINCOUNT:
+                case SysExMsg.GetPinCount:
                     Answers.Enqueue(SerialMessage(msg.Command, MaxPinCount, 0));
                     break;
-                case SysExMsg.MSG_GET_PINVALUE:
+                case SysExMsg.GetPinValue:
                     byte pin = msg.Values[0];
 
                     Answers.Enqueue(pin == byte.MaxValue
@@ -66,28 +66,28 @@ namespace win.aDrumsSimulator
                             Enumerable.Range(0, MaxPinCount).Select(x => GetPinValue((byte) x)).ToArray())
                         : SerialMessage(msg.Command, pin, GetPinValue(pin)));
                     break;
-                case SysExMsg.MSG_EEPROM:
+                case SysExMsg.Eeprom:
                     if (isSet)
                         SaveToEeprom(_fileName, _currentVersion);
                     else
                         GetFromEeprom(_fileName, _currentVersion);
                     break;
-                case SysExMsg.MSG_pinType:
+                case SysExMsg.PinType:
                     SetOrGetArrayValue(isSet, ref _pinType, msg.Command, msg.Values);
                     break;
-                case SysExMsg.MSG_pinNoteOnThreshold:
-                    SetOrGetArrayValue(isSet, ref _pinNoteOnThreshold, msg.Command, msg.Values);
+                case SysExMsg.PinNote:
+                    SetOrGetArrayValue(isSet, ref _pinNote, msg.Command, msg.Values);
                     break;
-                case SysExMsg.MSG_pinThreshold:
+                case SysExMsg.PinThreshold:
                     SetOrGetArrayValue(isSet, ref _pinThreshold, msg.Command, msg.Values);
                     break;
-                case SysExMsg.MSG_pinPitch:
+                case SysExMsg.PinPitch:
                     SetOrGetArrayValue(isSet, ref _pinPitch, msg.Command, msg.Values);
                     break;
-                case SysExMsg.MSG_pinCurve:
+                case SysExMsg.PinCurve:
                     SetOrGetCurve(isSet, msg.Command, msg.Values);
                     break;
-                case SysExMsg.MSG_pinCurveModifications:
+                case SysExMsg.PinCurveModifications:
                     SetOrGetCurveModifications(isSet, msg.Command, msg.Values);
                     break;
             }
@@ -131,7 +131,7 @@ namespace win.aDrumsSimulator
                 for (int i = 0; i < MaxPinCount; i++)
                     _pinThreshold[i] = (byte) fs.ReadByte();
                 for (int i = 0; i < MaxPinCount; i++)
-                    _pinNoteOnThreshold[i] = (byte) fs.ReadByte();
+                    _pinNote[i] = (byte) fs.ReadByte();
                 for (int i = 0; i < MaxPinCount; i++)
                 {
                     byte[] bytes = new byte[TriggerCurve.Size];
@@ -169,7 +169,7 @@ namespace win.aDrumsSimulator
                 yield return b;
             foreach (var b in _pinThreshold)
                 yield return b;
-            foreach (var b in _pinNoteOnThreshold)
+            foreach (var b in _pinNote)
                 yield return b;
             foreach (var curve in _pinCurve)
             {

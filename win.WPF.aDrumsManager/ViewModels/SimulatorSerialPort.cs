@@ -105,8 +105,10 @@ namespace win.WPF.aDrumsManager.ViewModels
 
         public void Write(byte[] buffer, int offset, int count)
         {
+            DateTime max = DateTime.Now.AddSeconds(2);
             while (!_messageWasReceived)
             {
+                if (DateTime.Now > max) throw new TimeoutException();
                 ThreadPool.QueueUserWorkItem(wb => { _client.PushMessage(new byte[0]); });
                 Thread.Sleep(50);
             }

@@ -41,7 +41,7 @@ namespace aDrumsLib
             _sp.DtrEnable = true;
             _sp.Open();
 
-            var r = RunCommand(SysExMsg.MSG_GET_HANDSHAKE, CommandType.Get);
+            var r = RunCommand(SysExMsg.Handshake, CommandType.Get);
             if (r.Values.Length != 2) throw new Exception($"Not a valid aDrum response in {serialPort.PortName}");
             aDrumVersion = new Version(r.Values[0], r.Values[1]);
 

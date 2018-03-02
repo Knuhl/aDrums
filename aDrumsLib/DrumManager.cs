@@ -45,7 +45,7 @@ namespace aDrumsLib
             {
                 SerialD = new SerialDevice(SerialPort);
 
-                PinCount = SerialD.RunCommand(SysExMsg.MSG_GET_PINCOUNT, CommandType.Get).Values[0];
+                PinCount = SerialD.RunCommand(SysExMsg.GetPinCount, CommandType.Get).Values[0];
             }
             LoadSettings();
         }
@@ -86,26 +86,26 @@ namespace aDrumsLib
         {
             SaveSettings();
             lock (_serialLock)
-                SerialD.Send(new SysExMessage(SysExMsg.MSG_EEPROM, CommandType.Set).ToArray());
+                SerialD.Send(new SysExMessage(SysExMsg.Eeprom, CommandType.Set).ToArray());
         }
 
         public void LoadSettingsFromEeprom()
         {
             lock (_serialLock)
-                SerialD.Send(new SysExMessage(SysExMsg.MSG_EEPROM, CommandType.Get).ToArray());
+                SerialD.Send(new SysExMessage(SysExMsg.Eeprom, CommandType.Get).ToArray());
             LoadSettings();
         }
 
         public byte GetPinValue(Pins pin)
         {
             lock (_serialLock)
-                return SerialD.RunCommand(SysExMsg.MSG_GET_PINVALUE, CommandType.Get, (byte) pin).Values[1];
+                return SerialD.RunCommand(SysExMsg.GetPinValue, CommandType.Get, (byte) pin).Values[1];
         }
 
         public List<byte> GetAllPinValues()
         {
             lock (_serialLock)
-                return SerialD.RunCommand(SysExMsg.MSG_GET_PINVALUE, CommandType.Get, byte.MaxValue).Values.Skip(1)
+                return SerialD.RunCommand(SysExMsg.GetPinValue, CommandType.Get, byte.MaxValue).Values.Skip(1)
                     .ToList();
         }
 
