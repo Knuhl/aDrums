@@ -49,7 +49,7 @@ namespace win.WPF.aDrumsManager.ViewModels
         {
             _availablePorts = new ObservableCollection<string>(Factory.GetPortNames());
             _availablePorts.Insert(0, SimulatorSerialPort.SimulatedSerialPortName);
-            SelectedComPort = _availablePorts.Count == 1 ? _availablePorts[0] : null;
+            //SelectedComPort = _availablePorts.Count == 1 ? _availablePorts[0] : null;
         }
         
         private void ConnectToPort(string comPort)
